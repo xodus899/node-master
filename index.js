@@ -2,20 +2,55 @@
 
 //dependencies
 const http = require("http");
+const https = require("https");
 const url = require("url");
 const stringDecoder = require("string_decoder").StringDecoder;
+const config = require("./config");
+const fs = require("fs");
 
-// server should respond to all requests in string format
-const server = http.createServer(function(req,res) {
+// server  on http
+const httpServer = http.createServer(function(req,res) {
+  unifiedServer(req,res);
+});
 
-  // get url and parse
+// start http server listen
+httpServer.listen(config.httpPort,function() {
+  console.log(`Server is listening on port ${config.port} and in ${config.httpsPort} environment`);
+});
+
+// server  on http
+const httpsServerOptions = {
+  "key"  : fs.readFileSync("./https/key.pem"),
+  "cert" : fs.readFileSync("./https/cert.pem")
+};
+
+
+// server  on https
+const httpsServer = https.createServer(httpsServerOptions,function(req,res) {
+  unifiedServer(req,res);
+});
+
+// start http server listen
+
+httpsServer.listen(config.httpsPort,function() {
+  console.log(`Server is listening on port ${config.port} and in ${config.httpsPort} environment`);
+});
+
+
+
+
+
+// server logic for http and https server
+
+const unifiedServer = function(req,res) {
+   // get url and parse
 
   const parsedUrl = url.parse(req.url,true);
 
   //get url path
 
   const path = parsedUrl.pathname;
-  const trimmedPath = path.replace(/^\/+|\/+$/g,'');
+  const trimmedPath = path.replace(/^\/+|\/+$/g,"");
 
   // get query string
   const queryStringObject = parsedUrl.query;
@@ -30,42 +65,42 @@ const server = http.createServer(function(req,res) {
 
   // get the payload if any
 
-  const decoder = new stringDecoder('utf-8');
-  var buffer = '';
-  req.on('data',function(data) {
+  const decoder = new stringDecoder("utf-8");
+  var buffer = "";
+  req.on("data",function(data) {
     buffer += decoder.write(data);
   });
-  req.on('end',function() {
+  req.on("end",function() {
     buffer += decoder.end();
 
     // chose request for hander, if not found use not found handler
 
-    const chosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
+    const chosenHandler = typeof(router[trimmedPath]) !== "undefined" ? router[trimmedPath] : handlers.notFound;
 
     //construct data object to send to the handler
 
     const data = {
-      'trimmedPath': trimmedPath,
-      'queryStringObject': queryStringObject,
-      'method': method,
-      'headers': headers,
-      'payload': buffer
+      "trimmedPath": trimmedPath,
+      "queryStringObject": queryStringObject,
+      "method" : method,
+      "headers": headers,
+      "payload": buffer
     };
 
     //route to chosen handler
 
     chosenHandler(data,function(statusCode,payload) {
       // use status code callbacked by handler or default 200
-      statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
+      statusCode = typeof(statusCode) == "number" ? statusCode : 200;
       // use payload called back by payload or default to empty object
-      payload = typeof(payload) == 'object' ? payload : {};
+      payload = typeof(payload) == "object" ? payload : {};
 
       // convert payload to string
 
       const payloadToString = JSON.stringify(payload);
 
       //return response
-      res.setHeader('Content-Type','application/json');
+      res.setHeader("Content-Type","application/json");
       res.writeHead(statusCode);
       res.end(payloadToString);
       // log path user was asking
@@ -74,33 +109,28 @@ const server = http.createServer(function(req,res) {
 
   });
 
-});
+};
 
-// start server listen on port 3000
 
-server.listen(3000,function() {
-  console.log("Server is listening on port 3000");
-});
+// define handlers
 
-  // define handlers
+const handlers = {};
 
-  var handlers = {};
+//sample handler
+handlers.sample = function(data,callback) {
+  // callback http status code and payload object
+  callback( 406, {"name": "sample handle"} );
+};
 
-  //sample handler
-  handlers.sample = function(data,callback) {
-    // callback http status code and payload object
-    callback( 406, {'name': 'sample handle'} );
-  };
-
-  //not found handlers
-  handlers.notFound = function(data,callback) {
-    callback(404);
-  };
+//not found handlers
+handlers.notFound = function(data,callback) {
+  callback(404);
+};
 
 // define a request router
 
 var router = {
-  'sample': handlers.sample
+  "sample": handlers.sample
 };
 
 
