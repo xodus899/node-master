@@ -40,7 +40,7 @@ const server = http.createServer(function(req,res) {
 
     // chose request for hander, if not found use not found handler
 
-    const chosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : rotuer[notFound];
+    const chosenHandler = typeof(router[trimmedPath]) !== 'undefined' ? router[trimmedPath] : handlers.notFound;
 
     //construct data object to send to the handler
 
@@ -59,19 +59,19 @@ const server = http.createServer(function(req,res) {
       statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
       // use payload called back by payload or default to empty object
       payload = typeof(payload) == 'object' ? payload : {};
+
+      // convert payload to string
+
+      const payloadToString = JSON.stringify(payload);
+
+      //return response
+      res.setHeader('Content-Type','application/json');
+      res.writeHead(statusCode);
+      res.end(payloadToString);
+      // log path user was asking
+      console.log("Request received with: ", statusCode,payloadToString);
     });
 
-    // convert payload to string
-
-    const payloadToString = JSON.stringify(payload);
-
-    //return response
-
-    res.writeHead(statusCode);
-    res.end(payloadToString);
-
-    // log path user was asking
-    console.log("Request received with: ", statusCode,payloadToString);
   });
 
 });
@@ -89,7 +89,7 @@ server.listen(3000,function() {
   //sample handler
   handlers.sample = function(data,callback) {
     // callback http status code and payload object
-    callback(406,{'name: sample handle'});
+    callback( 406, {'name': 'sample handle'} );
   };
 
   //not found handlers
