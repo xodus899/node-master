@@ -1,7 +1,5 @@
 //primary file for api
 
-
-
 //dependencies
 const http = require("http");
 const url = require("url");
@@ -61,15 +59,19 @@ const server = http.createServer(function(req,res) {
       statusCode = typeof(statusCode) == 'number' ? statusCode : 200;
       // use payload called back by payload or default to empty object
       payload = typeof(payload) == 'object' ? payload : {};
-    })
+    });
 
+    // convert payload to string
 
+    const payloadToString = JSON.stringify(payload);
 
-    // send response
-    res.end("hello world\n");
+    //return response
+
+    res.writeHead(statusCode);
+    res.end(payloadToString);
 
     // log path user was asking
-    console.log("Request received with payload:", buffer);
+    console.log("Request received with: ", statusCode,payloadToString);
   });
 
 });
