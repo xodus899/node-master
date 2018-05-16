@@ -17,12 +17,21 @@ const server = http.createServer(function(req,res) {
   //get url path
 
   const path = parsedUrl.pathname;
-  const trimmedPath = path.replace(/^\/+|\/+$/g,'')
+  const trimmedPath = path.replace(/^\/+|\/+$/g,'');
+
+  // get http method
+
+  const method = req.method.toUpperCase();
+
   // send response
 
 
   // log path user was asking
-
+  if (trimmedPath === "") {
+    console.log ("User requested homepage", trimmedPath+ "with method: " + method);
+  } else {
+    console.log("User path, " + trimmedPath);
+  }
 
   // start server listen on port 3000
 });
